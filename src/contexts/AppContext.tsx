@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +18,8 @@ import {
   getUsers,
   updateUser,
   removeUser,
-  removeProject
+  removeProject,
+  updateProject
 } from '@/lib/storage';
 import { useAuth } from './AuthContext';
 
@@ -38,6 +38,9 @@ interface AppContextType {
   updateFreelancerProfile: (freelancer: FreelancerProfile) => void;
   updateClientProfile: (client: ClientProfile) => void;
   getProjectById: (projectId: string) => Project | undefined;
+  completeProject: (projectId: string) => void;
+  hireFreelancer: (projectId: string, freelancerId: string, proposalId: string) => void;
+  removeHiredFreelancer: (projectId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -269,6 +272,126 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return projects.find(p => p.id === projectId);
   };
 
+  const completeProject = (projectId: string) => {
+    if (!isAuthenticated) {
+      toast.error('You must be logged in to complete a project');
+      return;
+    }
+
+    const project = projects.find(p => p.id === projectId);
+    
+    if (!project) {
+      toast.error('Project not found');
+      return;
+    }
+
+    // Only client who created the project or admin can mark it as completed
+    if (currentUser?.role !== 'admin' && currentUser?.id !== project.clientId) {
+      toast.error('You do not have permission to complete this project');
+      return;
+    }
+
+    const updatedProject = {
+      ...project,
+      status: 'completed' as const
+    };
+
+    const updatedProjects = [...projects];
+    const projectIndex = updatedProjects.findIndex(p => p.id === projectId);
+    updatedProjects[projectIndex] = updatedProject;
+    
+    setProjects(updatedProjects);
+    updateProject(updatedProject);
+    toast.success('Project marked as completed');
+  };
+
+  const hireFreelancer = (projectId: string, freelancerId: string, proposalId: string) => {
+    if (!isAuthenticated || currentUser?.role !== 'client') {
+      toast.error('Você precisa estar logado como cliente para contratar freelancers');
+      return;
+    }
+  
+    const projectIndex = projects.findIndex(p => p.id === projectId);
+    
+    if (projectIndex === -1) {
+      toast.error('Projeto não encontrado');
+      return;
+    }
+  
+    const project = projects[projectIndex];
+    
+    // Verificar se o cliente é o dono do projeto
+    if (project.clientId !== currentUser.id) {
+      toast.error('Você não tem permissão para modificar este projeto');
+      return;
+    }
+  
+    // Atualizar o status da proposta
+    const updatedProposals = project.proposals.map(proposal => 
+      proposal.id === proposalId 
+        ? { ...proposal, status: 'accepted' } 
+        : { ...proposal, status: proposal.status === 'accepted' ? 'pending' : proposal.status }
+    );
+  
+    // Atualizar o projeto
+    const updatedProject = {
+      ...project,
+      hiredFreelancerId: freelancerId,
+      status: 'in_progress' as const,
+      proposals: updatedProposals
+    };
+  
+    const updatedProjects = [...projects];
+    updatedProjects[projectIndex] = updatedProject;
+    
+    setProjects(updatedProjects);
+    updateProject(updatedProject);
+    toast.success('Freelancer contratado com sucesso!');
+  };
+  
+  const removeHiredFreelancer = (projectId: string) => {
+    if (!isAuthenticated || currentUser?.role !== 'client') {
+      toast.error('Você precisa estar logado como cliente para gerenciar freelancers');
+      return;
+    }
+  
+    const projectIndex = projects.findIndex(p => p.id === projectId);
+    
+    if (projectIndex === -1) {
+      toast.error('Projeto não encontrado');
+      return;
+    }
+  
+    const project = projects[projectIndex];
+    
+    // Verificar se o cliente é o dono do projeto
+    if (project.clientId !== currentUser.id) {
+      toast.error('Você não tem permissão para modificar este projeto');
+      return;
+    }
+  
+    // Atualizar o status de todas as propostas para pending
+    const updatedProposals = project.proposals.map(proposal => ({
+      ...proposal,
+      status: 'pending' as const
+    }));
+  
+    // Atualizar o projeto
+    const updatedProject = {
+      ...project,
+      hiredFreelancerId: undefined,
+      status: 'open' as const,
+      proposals: updatedProposals
+    };
+  
+    const updatedProjects = [...projects];
+    updatedProjects[projectIndex] = updatedProject;
+    
+    setProjects(updatedProjects);
+    updateProject(updatedProject);
+    toast.success('Freelancer removido do projeto');
+  };
+
   const value = {
     projects,
     categories,
@@ -283,7 +406,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     getFreelancerById,
     updateFreelancerProfile,
     updateClientProfile,
-    getProjectById
+    getProjectById,
+    completeProject,
+    hireFreelancer,
+    removeHiredFreelancer
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, DollarSign, Clock, MessageCircle, Trash2, User } from 'lucide-react';
+import { ArrowLeft, Calendar, DollarSign, Clock, MessageCircle, Trash2, User, CheckCircle, X } from 'lucide-react';
 import { format } from 'date-fns';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -21,14 +20,38 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import RatingSystem from '@/components/RatingSystem';
 
 const ProjectDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getProjectById, submitProposal, deleteProject } = useApp();
+  const { 
+    getProjectById, 
+    submitProposal, 
+    deleteProject, 
+    completeProject,
+    hireFreelancer, 
+    removeHiredFreelancer 
+  } = useApp();
   const { currentUser, isAuthenticated, isFreelancer, isClient, isAdmin } = useAuth();
   const navigate = useNavigate();
   
-  const [project, setProject] = useState(id ? getProjectById(id) : undefined);
+  interface Project {
+    id: string;
+    title: string;
+    description: string;
+    budget: number;
+    category: string;
+    clientId: string;
+    clientName: string;
+    createdAt: string;
+    deadline: string;
+    attachmentUrl?: string;
+    proposals: any[];
+    status: string;
+    hiredFreelancerId?: string;
+  }
+  
+  const [project, setProject] = useState<Project | undefined>(id ? getProjectById(id) : undefined);
   const [proposalMessage, setProposalMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -86,6 +109,24 @@ const ProjectDetailsPage: React.FC = () => {
     navigate('/projects');
   };
 
+  const handleCompleteProject = () => {
+    completeProject(project.id);
+    // Atualizar o projeto na tela
+    setProject(getProjectById(project.id));
+  };
+
+  const handleHireFreelancer = (freelancerId: string, proposalId: string) => {
+    hireFreelancer(project.id, freelancerId, proposalId);
+    // Atualizar o projeto na tela
+    setProject(getProjectById(project.id));
+  };
+
+  const handleRemoveFreelancer = () => {
+    removeHiredFreelancer(project.id);
+    // Atualizar o projeto na tela
+    setProject(getProjectById(project.id));
+  };
+
   const handleContactClick = (proposal: any) => {
     // Generate WhatsApp link with pre-filled message
     const message = `Olá! Estou interessado em discutir o projeto "${project.title}" no ConectaJob.`;
@@ -114,6 +155,15 @@ const ProjectDetailsPage: React.FC = () => {
                 <h1 className="text-2xl md:text-3xl font-bold text-conecta-earth-dark mb-2">
                   {project.title}
                 </h1>
+                {project.status === 'completed' && (
+                  <Badge 
+                    variant="outline" 
+                    className="bg-green-100 text-green-800 border-0 ml-2"
+                  >
+                    <CheckCircle size={14} className="mr-1" />
+                    Concluído
+                  </Badge>
+                )}
                 <p className="text-sm text-muted-foreground">
                   Publicado por {project.clientName} • {format(createdDate, 'dd/MM/yyyy')}
                 </p>
@@ -204,16 +254,46 @@ const ProjectDetailsPage: React.FC = () => {
                                   </p>
                                 </div>
                               </div>
-                              <Button
-                                size="sm"
-                                onClick={() => handleContactClick(proposal)}
-                                className="conecta-button"
-                              >
-                                <MessageCircle size={14} className="mr-1" />
-                                Contatar
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleContactClick(proposal)}
+                                  variant="outline"
+                                >
+                                  <MessageCircle size={14} className="mr-1" />
+                                  Contatar
+                                </Button>
+                                
+                                {proposal.status !== 'accepted' && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleHireFreelancer(proposal.freelancerId, proposal.id)}
+                                    className="conecta-button"
+                                  >
+                                    <CheckCircle size={14} className="mr-1" />
+                                    Contratar
+                                  </Button>
+                                )}
+                                
+                                {proposal.status === 'accepted' && (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={handleRemoveFreelancer}
+                                  >
+                                    <X size={14} className="mr-1" />
+                                    Remover
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                             <p className="whitespace-pre-line">{proposal.message}</p>
+                            {proposal.status === 'accepted' && (
+                              <div className="mt-2 py-1 px-2 bg-conecta-green/10 text-conecta-green text-sm rounded inline-flex items-center">
+                                <CheckCircle size={12} className="mr-1" />
+                                Contratado
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -223,6 +303,58 @@ const ProjectDetailsPage: React.FC = () => {
                         <p className="text-muted-foreground">Nenhuma proposta ainda</p>
                       </div>
                     )}
+                    {project.status !== 'completed' && (
+                      <Button 
+                        onClick={handleCompleteProject}
+                        className="conecta-button mt-4 w-full"
+                      >
+                        <CheckCircle size={16} className="mr-2" />
+                        Marcar Projeto como Concluído
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
+                {isClient && isOwner && project.status === 'completed' && (
+                  <div className="mb-8">
+                    <h2 className="text-xl font-semibold mb-4">Avaliar Freelancers</h2>
+                    
+                    {project.hiredFreelancerId ? (
+                      <RatingSystem 
+                        freelancerId={project.hiredFreelancerId} 
+                        projectId={project.id} 
+                      />
+                    ) : (
+                      <div className="bg-slate-50 p-6 rounded-lg text-center">
+                        <p className="text-muted-foreground">
+                          Nenhum freelancer contratado para este projeto
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {project.hiredFreelancerId && (
+                  <div className="mb-8 p-4 bg-conecta-green/10 rounded-lg">
+                    <h2 className="text-xl font-semibold mb-2 flex items-center text-conecta-green">
+                      <CheckCircle size={18} className="mr-2" />
+                      Freelancer Contratado
+                    </h2>
+                    <div className="flex items-center">
+                      <Avatar className="h-10 w-10 mr-3">
+                        <AvatarFallback className="bg-conecta-green text-white">
+                          {project.proposals.find(p => p.freelancerId === project.hiredFreelancerId)?.freelancerName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">
+                          {project.proposals.find(p => p.freelancerId === project.hiredFreelancerId)?.freelancerName}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Trabalhando no projeto
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
                 

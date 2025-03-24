@@ -12,6 +12,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { FreelancerProfile, Rating } from '@/types/models';
+import { RatingList } from '@/components/RatingSystem';
 
 const FreelancerProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -187,18 +188,22 @@ const FreelancerProfilePage: React.FC = () => {
                       )}
                     </TabsContent>
                     <TabsContent value="reviews">
-                      {freelancer.ratings && freelancer.ratings.length > 0 ? (
-                        <div>
-                          {freelancer.ratings.map((rating, index) => (
-                            <RatingItem key={index} rating={rating} />
-                          ))}
+                      <div className="mb-4">
+                        <div className="flex items-center mb-6">
+                          <h3 className="text-lg font-semibold">Avaliações</h3>
+                          <div className="flex items-center ml-4">
+                            <RatingStars initialRating={freelancer.averageRating} readonly size="sm" />
+                            <span className="ml-2 text-conecta-earth font-medium">
+                              {freelancer.averageRating ? freelancer.averageRating.toFixed(1) : 'N/A'}
+                            </span>
+                            <span className="ml-2 text-sm text-muted-foreground">
+                              ({freelancer.ratings.length} avaliações)
+                            </span>
+                          </div>
                         </div>
-                      ) : (
-                        <div className="text-center py-8 bg-slate-50 rounded-lg">
-                          <Award size={32} className="mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-muted-foreground">Nenhuma avaliação ainda</p>
-                        </div>
-                      )}
+                        
+                        <RatingList ratings={freelancer.ratings} />
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </div>
