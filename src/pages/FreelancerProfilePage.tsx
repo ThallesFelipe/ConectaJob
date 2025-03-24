@@ -228,11 +228,12 @@ const FreelancerProfilePage: React.FC = () => {
                       Membro desde {format(new Date(freelancer.createdAt), 'MMMM yyyy')}
                     </p>
                   </div>
-                  
+
+                  {/* Botão de contato único */}
                   {isAuthenticated ? (
-                    <Button onClick={handleContactClick} className="conecta-button-secondary w-full mb-6">
+                    <Button onClick={handleContactClick} className="conecta-button w-full mb-6">
                       <MessageCircle size={16} className="mr-2" />
-                      Contato via WhatsApp
+                      Contatar via WhatsApp
                     </Button>
                   ) : (
                     <div className="bg-conecta-pastel-mint/20 rounded-lg p-5 text-center">

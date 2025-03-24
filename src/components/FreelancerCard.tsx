@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
@@ -20,8 +19,12 @@ const FreelancerCard: React.FC<FreelancerCardProps> = ({ freelancer }) => {
   };
 
   return (
-    <Link to={`/freelancers/${freelancer.id}`}>
-      <div className="conecta-card hover:shadow-lg border border-conecta-pastel-mint/30 group animate-fade-in">
+    <Link 
+      to={`/freelancers/${freelancer.id}`} 
+      className="block" 
+      aria-label={`Ver perfil de ${freelancer.username}`}
+    >
+      <div className="bg-white rounded-xl hover:shadow-md transition-shadow p-4" tabIndex={0}>
         <div className="flex items-start gap-4">
           <Avatar className="h-14 w-14 bg-conecta-yellow/20">
             <AvatarImage src={freelancer.profileImage} />

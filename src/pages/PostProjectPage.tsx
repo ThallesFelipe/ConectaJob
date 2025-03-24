@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -17,84 +16,50 @@ import {
 import ImageUpload from '@/components/ImageUpload';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { validateProjectTitle, validateProjectDescription, validateProjectBudget, validateProjectDeadline } from '@/lib/validation';
 import { toast } from 'sonner';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+// Create a validation schema
+const projectSchema = z.object({
+  title: z.string().min(5, 'O título deve ter pelo menos 5 caracteres'),
+  description: z.string().min(20, 'A descrição deve ter pelo menos 20 caracteres'),
+  category: z.string().min(1, 'Por favor, selecione uma categoria'),
+  budget: z.number().positive('O orçamento deve ser um número positivo'),
+  deadline: z.string().refine(val => new Date(val) > new Date(), 'Por favor, selecione uma data futura')
+});
+
+type ProjectFormValues = z.infer<typeof projectSchema>;
 
 const PostProjectPage: React.FC = () => {
   const { categories, createProject } = useApp();
   const { currentUser, isAuthenticated, isClient } = useAuth();
   const navigate = useNavigate();
+  const [attachment, setAttachment] = useState<string | undefined>(undefined);
   
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [budget, setBudget] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [attachment, setAttachment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectSchema)
+  });
   
-  // Calculate minimum date for deadline (today)
-  const today = new Date();
-  const minDate = today.toISOString().split('T')[0];
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const onSubmit = (data: ProjectFormValues) => {
     if (!isAuthenticated || !isClient) {
       toast.error('Você precisa estar logado como cliente para publicar um projeto');
       navigate('/login');
       return;
     }
+
+    // Create project with validated data
+    createProject({
+      clientId: currentUser!.id,
+      clientName: currentUser!.username,
+      ...data,
+      status: 'open',
+      attachmentUrl: attachment
+    });
     
-    // Validate input
-    if (!validateProjectTitle(title)) {
-      toast.error('O título deve ter pelo menos 5 caracteres');
-      return;
-    }
-    
-    if (!validateProjectDescription(description)) {
-      toast.error('A descrição deve ter pelo menos 20 caracteres');
-      return;
-    }
-    
-    if (!category) {
-      toast.error('Por favor, selecione uma categoria');
-      return;
-    }
-    
-    const budgetValue = parseFloat(budget);
-    if (!validateProjectBudget(budgetValue)) {
-      toast.error('O orçamento deve ser um número positivo');
-      return;
-    }
-    
-    if (!validateProjectDeadline(deadline)) {
-      toast.error('Por favor, selecione uma data futura válida');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      createProject({
-        clientId: currentUser!.id,
-        clientName: currentUser!.username,
-        title,
-        description,
-        category,
-        budget: budgetValue,
-        deadline,
-        status: 'open',
-        attachmentUrl: attachment || undefined
-      });
-      
-      navigate('/projects');
-    } catch (error) {
-      console.error('Erro ao criar projeto:', error);
-      toast.error('Ocorreu um erro ao criar o projeto');
-    } finally {
-      setIsSubmitting(false);
-    }
+    toast.success('Projeto criado com sucesso!');
+    navigate('/projects');
   };
   
   if (!isAuthenticated || !isClient) {
@@ -128,17 +93,17 @@ const PostProjectPage: React.FC = () => {
           </div>
           
           <div className="bg-white rounded-xl shadow-md p-6 md:p-8 animate-fade-in">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">Título do Projeto</Label>
                 <Input
                   id="title"
                   placeholder="Ex: Desenvolvimento de Website para Pequena Empresa"
                   className="conecta-input"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  {...register('title')}
                   required
                 />
+                {errors.title && <p className="text-red-500">{errors.title.message}</p>}
               </div>
               
               <div className="space-y-2">
@@ -147,31 +112,37 @@ const PostProjectPage: React.FC = () => {
                   id="description"
                   placeholder="Forneça detalhes sobre seu projeto, requisitos e expectativas..."
                   className="conecta-input min-h-[150px]"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  {...register('description')}
                   required
                 />
+                {errors.description && <p className="text-red-500">{errors.description.message}</p>}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoria</Label>
-                  <Select
-                    value={category}
-                    onValueChange={setCategory}
-                    required
-                  >
-                    <SelectTrigger id="category" className="conecta-input">
-                      <SelectValue placeholder="Selecione uma categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.name}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="category"
+                    control={control}
+                    render={({ field }) => (
+                      <Select 
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger id="category" className="conecta-input">
+                          <SelectValue placeholder="Selecione uma categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.category && <p className="text-red-500">{errors.category.message}</p>}
                 </div>
                 
                 <div className="space-y-2">
@@ -181,12 +152,12 @@ const PostProjectPage: React.FC = () => {
                     type="number"
                     placeholder="Digite seu orçamento em reais"
                     className="conecta-input"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
+                    {...register('budget', { valueAsNumber: true })}
                     min="1"
                     step="0.01"
                     required
                   />
+                  {errors.budget && <p className="text-red-500">{errors.budget.message}</p>}
                 </div>
                 
                 <div className="space-y-2">
@@ -196,13 +167,12 @@ const PostProjectPage: React.FC = () => {
                       id="deadline"
                       type="date"
                       className="conecta-input pl-10"
-                      value={deadline}
-                      onChange={(e) => setDeadline(e.target.value)}
-                      min={minDate}
+                      {...register('deadline')}
                       required
                     />
                     <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-conecta-green" />
                   </div>
+                  {errors.deadline && <p className="text-red-500">{errors.deadline.message}</p>}
                 </div>
               </div>
               
