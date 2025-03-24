@@ -1,0 +1,93 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ConectaJob custom light theme */
+    --background: 140 30% 98%;
+    --foreground: 155 30% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 142 43% 42%;
+    --primary-foreground: 355.7 100% 97.3%;
+
+    --secondary: 45 100% 58%;
+    --secondary-foreground: 144 80% 10%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 30 40% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 142 30% 90%;
+    --input: 142 30% 90%;
+    --ring: 142 43% 42%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+}
+
+@layer utilities {
+  .glass-morphism {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-glass;
+  }
+  
+  .neo-morphism {
+    @apply bg-white shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.6)];
+  }
+  
+  .conecta-card {
+    @apply bg-white rounded-xl p-6 transition-all duration-300 shadow-md hover:shadow-xl;
+  }
+  
+  .conecta-input {
+    @apply w-full px-4 py-2 bg-white border border-conecta-green/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-conecta-green/50 transition-all duration-300;
+  }
+
+  .conecta-button {
+    @apply px-6 py-3 bg-conecta-green text-white rounded-lg font-medium transition-all duration-300 hover:bg-conecta-green-dark focus:outline-none focus:ring-2 focus:ring-conecta-green-dark/50 focus:ring-offset-2 disabled:opacity-50;
+  }
+  
+  .conecta-button-secondary {
+    @apply px-6 py-3 bg-conecta-yellow text-conecta-earth-dark rounded-lg font-medium transition-all duration-300 hover:bg-conecta-yellow-dark focus:outline-none focus:ring-2 focus:ring-conecta-yellow-dark/50 focus:ring-offset-2 disabled:opacity-50;
+  }
+  
+  .service-card {
+    @apply conecta-card relative overflow-hidden border-conecta-pastel-mint/30 hover:border-conecta-green animate-fade-in;
+  }
+  
+  .service-card::before {
+    content: '';
+    @apply absolute -top-2 -right-2 w-16 h-16 bg-conecta-pastel-mint rounded-full opacity-30 transition-all duration-300;
+  }
+  
+  .service-card:hover::before {
+    @apply opacity-60 scale-110;
+  }
+}
