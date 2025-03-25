@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Plus, X, Edit2, User, Check } from 'lucide-react';
+import { Save, Plus, X, Edit2, User, Check, Trash2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 import ProjectCard from '@/components/ProjectCard';
 import ImageUpload from '@/components/ImageUpload';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +43,10 @@ const ProfilePage: React.FC = () => {
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+
+  // Adicionar novo estado para controlar o diálogo de exclusão de conta
+  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -105,6 +119,32 @@ const ProfilePage: React.FC = () => {
 
   const handleRemovePortfolioItem = (id: string) => {
     setPortfolio(portfolio.filter(item => item.id !== id));
+  };
+
+  const { removeUser } = useApp();
+  const { logout } = useAuth();
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setIsDeletingAccount(true);
+      
+      // Call API to delete user account
+      await removeUser(currentUser.id);
+      
+      // Log the user out
+      logout();
+      
+      toast.success('Sua conta foi excluída com sucesso');
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Não foi possível excluir sua conta. Tente novamente mais tarde.');
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteAccountDialog(false);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -321,6 +361,21 @@ const ProfilePage: React.FC = () => {
                     Publicar Novo Projeto
                   </Button>
                 )}
+
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="flex items-center" 
+                    onClick={() => setShowDeleteAccountDialog(true)}
+                  >
+                    <Trash2 size={16} className="mr-2" />
+                    Excluir minha conta
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Essa ação é irreversível e removerá todos os seus dados da plataforma.
+                  </p>
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -363,6 +418,38 @@ const ProfilePage: React.FC = () => {
           )}
         </Tabs>
       </div>
+
+      {/* AlertDialog for confirming account deletion */}
+      <AlertDialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza que deseja excluir sua conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta e removerá seus dados da plataforma.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAccount}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAccount} 
+              className="bg-destructive text-destructive-foreground"
+              disabled={isDeletingAccount}
+            >
+              {isDeletingAccount ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Excluindo...
+                </span>
+              ) : (
+                "Excluir Conta"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

@@ -32,6 +32,7 @@ interface AppContextType {
   deleteProject: (projectId: string) => void;
   addRating: (freelancerId: string, projectId: string, rating: number, comment: string) => void;
   deleteUser: (userId: string) => void;
+  removeUser: (userId: string) => Promise<void>; // Adicione esta linha
   getProjectsByUser: (userId: string) => Project[];
   getFreelancers: () => FreelancerProfile[];
   getFreelancerById: (freelancerId: string) => FreelancerProfile | null;
@@ -212,6 +213,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     toast.success('User deleted successfully');
   };
 
+  const removeUser = async (userId: string): Promise<void> => {
+    if (!isAuthenticated) {
+      toast.error('Você precisa estar logado para excluir sua conta');
+      return;
+    }
+  
+    // Verificando se o usuário está tentando excluir a própria conta ou é admin
+    if (currentUser?.id !== userId && currentUser?.role !== 'admin') {
+      toast.error('Você não tem permissão para excluir esta conta');
+      return;
+    }
+  
+    try {
+      // Remover o usuário da lista de usuários
+      const updatedUsers = users.filter(u => u.id !== userId);
+      setUsers(updatedUsers);
+      
+      // Excluir da armazenagem
+      removeUser(userId);
+      
+      // Remover projetos criados pelo usuário, se for cliente
+      const userProjects = projects.filter(p => p.clientId === userId);
+      if (userProjects.length > 0) {
+        const updatedProjects = projects.filter(p => p.clientId !== userId);
+        setProjects(updatedProjects);
+        saveProjects(updatedProjects);
+      }
+    } catch (error) {
+      console.error('Erro ao excluir conta:', error);
+      throw error;
+    }
+  };
+
   const getProjectsByUser = (userId: string) => {
     return projects.filter(p => p.clientId === userId);
   };
@@ -329,8 +363,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Atualizar o status da proposta
     const updatedProposals = project.proposals.map(proposal => 
       proposal.id === proposalId 
-        ? { ...proposal, status: 'accepted' } 
-        : { ...proposal, status: proposal.status === 'accepted' ? 'pending' : proposal.status }
+        ? { ...proposal, status: 'accepted' as const } 
+        : { ...proposal, status: proposal.status === 'accepted' ? ('pending' as const) : proposal.status }
     );
   
     // Atualizar o projeto
@@ -401,6 +435,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteProject,
     addRating,
     deleteUser,
+    removeUser, // Adicione esta linha
     getProjectsByUser,
     getFreelancers,
     getFreelancerById,
