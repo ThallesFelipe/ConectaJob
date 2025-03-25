@@ -17,9 +17,10 @@ import {
   getCategories,
   getUsers,
   updateUser,
-  removeUser,
+  removeUser as removeUserFromStorage,
   removeProject,
-  updateProject
+  updateProject,
+  saveUsers
 } from '@/lib/storage';
 import { useAuth } from './AuthContext';
 
@@ -200,7 +201,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const updatedUsers = users.filter(u => u.id !== userId);
     setUsers(updatedUsers);
-    removeUser(userId);
+    removeUserFromStorage(userId);
     
     // Also remove projects created by this user if it's a client
     const userProjects = projects.filter(p => p.clientId === userId);
@@ -231,7 +232,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUsers(updatedUsers);
       
       // Excluir da armazenagem
-      removeUser(userId);
+      saveUsers(updatedUsers); // This line was missing - need to save the updated users list
       
       // Remover projetos criados pelo usuário, se for cliente
       const userProjects = projects.filter(p => p.clientId === userId);

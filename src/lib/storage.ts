@@ -1,4 +1,3 @@
-
 import {
   User,
   FreelancerProfile,
@@ -16,7 +15,8 @@ const STORAGE_KEYS = {
 };
 
 // User storage
-export const saveUsers = (users: (User | FreelancerProfile | ClientProfile | AdminProfile)[]) => {
+export const saveUsers = (users: User[]) => {
+  // Check if this is correctly saving to localStorage or your database
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 };
 

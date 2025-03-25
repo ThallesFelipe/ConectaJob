@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -51,20 +50,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<boolean> => {
     // Validate input
     if (!email || !password) {
-      toast.error('Please provide both email and password');
+      toast.error('Por favor, forneça e-mail e senha');
       return false;
     }
 
     // Find user
     const user = findUserByEmail(email);
     if (!user) {
-      toast.error('User not found');
+      toast.error('Usuário não encontrado');
       return false;
     }
 
     // Check password
     if (user.password !== password) {
-      toast.error('Incorrect password');
+      toast.error('Senha incorreta');
       return false;
     }
 
@@ -72,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(user);
     setIsAuthenticated(true);
     saveCurrentUser(user);
-    toast.success(`Welcome back, ${user.username}!`);
+    toast.success(`Bem-vindo de volta, ${user.username}!`);
     return true;
   };
 
@@ -81,30 +80,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthenticated(false);
     saveCurrentUser(null);
     navigate('/');
-    toast.success('You have been logged out');
+    toast.success('Você foi desconectado');
   };
 
   const register = async (username: string, email: string, password: string, role: 'client' | 'freelancer'): Promise<boolean> => {
     // Validate input
     if (!validateUsername(username)) {
-      toast.error('Username must be at least 3 characters');
+      toast.error('O nome de usuário deve ter pelo menos 3 caracteres');
       return false;
     }
 
     if (!validateEmail(email)) {
-      toast.error('Please enter a valid email address');
+      toast.error('Por favor, insira um endereço de e-mail válido');
       return false;
     }
 
     if (!validatePassword(password)) {
-      toast.error('Password must be at least 8 characters');
+      toast.error('A senha deve ter pelo menos 8 caracteres');
       return false;
     }
 
     // Check if user already exists
     const existingUser = findUserByEmail(email);
     if (existingUser) {
-      toast.error('User with this email already exists');
+      toast.error('Usuário com este e-mail já existe');
       return false;
     }
 
