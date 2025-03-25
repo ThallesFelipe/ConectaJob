@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useApp } from '@/contexts/AppContext';
 import FreelancerCard from '@/components/FreelancerCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Star } from 'lucide-react';
+import { Search, Star, UserRound } from 'lucide-react';
 import { FreelancerProfile } from '@/types/models';
 
 const FreelancersPage: React.FC = () => {
@@ -14,42 +13,56 @@ const FreelancersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFreelancers, setFilteredFreelancers] = useState<FreelancerProfile[]>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const allFreelancers = getFreelancers();
-    setFreelancers(allFreelancers);
-    setFilteredFreelancers(allFreelancers);
+    // Buscar freelancers com um pequeno atraso para garantir que o contexto esteja pronto
+    const timer = setTimeout(() => {
+      const allFreelancers = getFreelancers();
+      console.log('Freelancers carregados:', allFreelancers);
+      setFreelancers(allFreelancers);
+      setFilteredFreelancers(allFreelancers);
+      setLoading(false);
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [getFreelancers]);
 
   const applyFilters = () => {
+    console.log('Aplicando filtros. Total freelancers:', freelancers.length);
     let filtered = [...freelancers];
     
     // Filter by search query
     if (searchQuery.trim()) {
+      console.log('Filtrando por query:', searchQuery);
       filtered = filtered.filter(
         freelancer =>
           freelancer.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          freelancer.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          freelancer.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
+          (freelancer.description && freelancer.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (freelancer.skills && freelancer.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase())))
       );
     }
     
     // Filter by rating
     if (selectedRating !== null) {
+      console.log('Filtrando por rating:', selectedRating);
       filtered = filtered.filter(
-        freelancer => Math.floor(freelancer.averageRating) >= selectedRating
+        freelancer => freelancer.averageRating >= selectedRating
       );
     }
     
     // Sort by rating
     filtered.sort((a, b) => b.averageRating - a.averageRating);
     
+    console.log('Resultado da filtragem:', filtered.length, 'freelancers');
     setFilteredFreelancers(filtered);
   };
 
   useEffect(() => {
-    applyFilters();
-  }, [selectedRating]);
+    if (!loading) {
+      applyFilters();
+    }
+  }, [selectedRating, loading]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,18 +120,29 @@ const FreelancersPage: React.FC = () => {
           </div>
         </div>
         
-        {filteredFreelancers.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin w-10 h-10 border-4 border-conecta-green border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p>Carregando freelancers...</p>
+          </div>
+        ) : filteredFreelancers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {filteredFreelancers.map(freelancer => (
               <FreelancerCard key={freelancer.id} freelancer={freelancer} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
+          <div className="text-center py-12 bg-conecta-pastel-mint/10 rounded-lg max-w-2xl mx-auto">
+            <UserRound size={48} className="mx-auto mb-4 text-conecta-green/40" />
             <h3 className="text-xl font-medium mb-2">Nenhum freelancer encontrado</h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               Tente ajustar sua busca ou critérios de filtro
             </p>
+            {freelancers.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Ainda não há freelancers cadastrados no sistema.
+              </p>
+            )}
           </div>
         )}
       </div>
