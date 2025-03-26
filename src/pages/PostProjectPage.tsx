@@ -118,7 +118,7 @@ const PostProjectPage: React.FC = () => {
                 {errors.description && <p className="text-red-500">{errors.description.message}</p>}
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoria</Label>
                   <Controller

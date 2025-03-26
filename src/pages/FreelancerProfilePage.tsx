@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { FreelancerProfile } from '@/types/models';
 import { RatingList } from '@/components/RatingSystem';
+import { toast } from 'sonner';
 
 const FreelancerProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,8 @@ const FreelancerProfilePage: React.FC = () => {
       const message = `Olá ${freelancer.username}! Encontrei seu perfil no ConectaJob e gostaria de discutir um projeto potencial.`;
       const whatsappUrl = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
+    } else {
+      toast.error('Este freelancer não possui número de WhatsApp cadastrado');
     }
   };
 
@@ -62,6 +65,7 @@ const FreelancerProfilePage: React.FC = () => {
       .toUpperCase();
   };
 
+  const hasWhatsApp = Boolean(freelancer.whatsappNumber);
 
   return (
     <Layout>
@@ -210,10 +214,21 @@ const FreelancerProfilePage: React.FC = () => {
 
                   {/* Botão de contato único */}
                   {isAuthenticated ? (
-                    <Button onClick={handleContactClick} className="conecta-button w-full mb-6">
-                      <MessageCircle size={16} className="mr-2" />
-                      Contatar via WhatsApp
-                    </Button>
+                    <>
+                      <Button 
+                        onClick={handleContactClick} 
+                        className="conecta-button w-full mb-6"
+                        disabled={!hasWhatsApp}
+                      >
+                        <MessageCircle size={16} className="mr-2" />
+                        Contatar via WhatsApp
+                      </Button>
+                      {!hasWhatsApp && (
+                        <p className="text-sm text-muted-foreground text-center mb-6">
+                          Este freelancer ainda não cadastrou um número de WhatsApp
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <div className="bg-conecta-pastel-mint/20 rounded-lg p-5 text-center">
                       <p className="mb-4">Faça login para contatar este freelancer</p>

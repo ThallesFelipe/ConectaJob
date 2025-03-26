@@ -1,5 +1,3 @@
-
-import React from 'react';
 import Layout from '@/components/Layout';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,7 +18,7 @@ const Index = () => {
             <Button asChild className="conecta-button py-6 px-8 text-lg">
               <Link to="/projects">Explorar Projetos</Link>
             </Button>
-            <Button asChild variant="outline" className="py-6 px-8 text-lg">
+            <Button asChild className="conecta-button-secondary py-6 px-8 text-lg">
               <Link to="/freelancers">Encontrar Freelancers</Link>
             </Button>
           </div>

@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, CheckSquare, AlertTriangle, Trash2, Eye } from 'lucide-react';
+import { Users, CheckSquare, AlertTriangle, Trash2, Eye, Loader } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 const AdminDashboardPage: React.FC = () => {
   const { currentUser, isAuthenticated, isAdmin } = useAuth();
@@ -37,6 +37,7 @@ const AdminDashboardPage: React.FC = () => {
   const [showDeleteProjectDialog, setShowDeleteProjectDialog] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Filter out admin users
   const filteredUsers = users.filter(user => user.role !== 'admin');
@@ -51,19 +52,35 @@ const AdminDashboardPage: React.FC = () => {
     setShowDeleteProjectDialog(true);
   };
   
-  const confirmDeleteUser = () => {
+  const confirmDeleteUser = async () => {
     if (selectedUserId) {
-      deleteUser(selectedUserId);
-      setShowDeleteUserDialog(false);
-      setSelectedUserId(null);
+      try {
+        setIsDeleting(true);
+        await deleteUser(selectedUserId);
+        toast.success('User deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete user');
+      } finally {
+        setIsDeleting(false);
+        setShowDeleteUserDialog(false);
+        setSelectedUserId(null);
+      }
     }
   };
   
-  const confirmDeleteProject = () => {
+  const confirmDeleteProject = async () => {
     if (selectedProjectId) {
-      deleteProject(selectedProjectId);
-      setShowDeleteProjectDialog(false);
-      setSelectedProjectId(null);
+      try {
+        setIsDeleting(true);
+        await deleteProject(selectedProjectId);
+        toast.success('Project deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete project');
+      } finally {
+        setIsDeleting(false);
+        setShowDeleteProjectDialog(false);
+        setSelectedProjectId(null);
+      }
     }
   };
   
@@ -136,12 +153,10 @@ const AdminDashboardPage: React.FC = () => {
                             <TableCell>
                               <Badge 
                                 variant="outline" 
-                                className={`
-                                  ${user.role === 'freelancer' 
-                                    ? 'bg-conecta-green/10 text-conecta-green border-0' 
-                                    : 'bg-conecta-yellow/10 text-conecta-yellow-dark border-0'
-                                  }
-                                `}
+                                className={user.role === 'freelancer' 
+                                  ? 'bg-conecta-green/10 text-conecta-green border-0' 
+                                  : 'bg-conecta-yellow/10 text-conecta-yellow-dark border-0'
+                                }
                               >
                                 {user.role === 'freelancer' ? 'Freelancer' : 'Client'}
                               </Badge>
@@ -154,6 +169,7 @@ const AdminDashboardPage: React.FC = () => {
                                   size="sm"
                                   onClick={() => viewFreelancer(user.id)}
                                   className="mr-2"
+                                  aria-label={`View profile of ${user.username}`}
                                 >
                                   <Eye size={16} className="mr-1" />
                                   View
@@ -163,6 +179,7 @@ const AdminDashboardPage: React.FC = () => {
                                 variant="destructive"
                                 size="sm"
                                 onClick={() => handleDeleteUser(user.id)}
+                                aria-label={`Delete user ${user.username}`}
                               >
                                 <Trash2 size={16} className="mr-1" />
                                 Delete
@@ -213,6 +230,7 @@ const AdminDashboardPage: React.FC = () => {
                                 size="sm"
                                 onClick={() => viewProject(project.id)}
                                 className="mr-2"
+                                aria-label={`View project ${project.title}`}
                               >
                                 <Eye size={16} className="mr-1" />
                                 View
@@ -221,6 +239,7 @@ const AdminDashboardPage: React.FC = () => {
                                 variant="destructive"
                                 size="sm"
                                 onClick={() => handleDeleteProject(project.id)}
+                                aria-label={`Delete project ${project.title}`}
                               >
                                 <Trash2 size={16} className="mr-1" />
                                 Delete
@@ -258,12 +277,20 @@ const AdminDashboardPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               className="bg-destructive text-destructive-foreground"
               onClick={confirmDeleteUser}
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? (
+                <span className="flex items-center">
+                  <Loader size={16} className="mr-2 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -283,12 +310,20 @@ const AdminDashboardPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               className="bg-destructive text-destructive-foreground"
               onClick={confirmDeleteProject}
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? (
+                <span className="flex items-center">
+                  <Loader size={16} className="mr-2 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

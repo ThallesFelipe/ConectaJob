@@ -52,7 +52,12 @@ const FreelancersPage: React.FC = () => {
     }
     
     // Sort by rating
-    filtered.sort((a, b) => b.averageRating - a.averageRating);
+    filtered.sort((a, b) => {
+      // Handle undefined or NaN averageRating values
+      const ratingA = isNaN(b.averageRating) ? 0 : b.averageRating;
+      const ratingB = isNaN(a.averageRating) ? 0 : a.averageRating;
+      return ratingA - ratingB;
+    });
     
     console.log('Resultado da filtragem:', filtered.length, 'freelancers');
     setFilteredFreelancers(filtered);
@@ -62,7 +67,7 @@ const FreelancersPage: React.FC = () => {
     if (!loading) {
       applyFilters();
     }
-  }, [selectedRating, loading]);
+  }, [selectedRating, loading, searchQuery, freelancers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
