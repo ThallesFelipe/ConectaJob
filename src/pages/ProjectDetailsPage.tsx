@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,27 +111,37 @@ const ProjectDetailsPage: React.FC = () => {
 
   const handleCompleteProject = () => {
     completeProject(project.id);
-    // Atualizar o projeto na tela
-    setProject(getProjectById(project.id));
+    // Use id from URL params instead of project.id
+    if (id) {
+      setProject(getProjectById(id));
+    }
   };
 
   const handleHireFreelancer = (freelancerId: string, proposalId: string) => {
     hireFreelancer(project.id, freelancerId, proposalId);
-    // Atualizar o projeto na tela
-    setProject(getProjectById(project.id));
+    // Use id from URL params instead of project.id
+    if (id) {
+      setProject(getProjectById(id));
+    }
   };
 
   const handleRemoveFreelancer = () => {
     removeHiredFreelancer(project.id);
-    // Atualizar o projeto na tela
-    setProject(getProjectById(project.id));
+    // Use id from URL params instead of project.id
+    if (id) {
+      setProject(getProjectById(id));
+    }
   };
 
   const handleContactClick = (proposal: any) => {
-    // Generate WhatsApp link with pre-filled message
-    const message = `Olá! Estou interessado em discutir o projeto "${project.title}" no ConectaJob.`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    if (proposal.freelancerWhatsappNumber) {
+      const number = proposal.freelancerWhatsappNumber.replace(/\D/g, ''); // Remove caracteres não numéricos
+      const message = `Olá ${proposal.freelancerName}! Estou interessado em discutir o projeto "${project.title}" no ConectaJob.`;
+      const whatsappUrl = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+    } else {
+      toast.error('Este freelancer não possui número de WhatsApp cadastrado');
+    }
   };
 
   return (

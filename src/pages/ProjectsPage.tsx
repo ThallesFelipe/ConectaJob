@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -16,9 +15,10 @@ const ProjectsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [minBudget, setMinBudget] = useState(0);
   const [maxBudget, setMaxBudget] = useState(10000);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
+  // Handle URL parameters only on initial load or URL change
   useEffect(() => {
-    // Get search params from URL
     const params = new URLSearchParams(location.search);
     const searchParam = params.get('search');
     const categoryParam = params.get('category');
@@ -31,9 +31,15 @@ const ProjectsPage: React.FC = () => {
       setSelectedCategory(categoryParam);
     }
     
-    // Apply filters when component mounts
-    applyFilters();
-  }, [location.search, projects]);
+    setInitialLoadComplete(true);
+  }, [location.search]);
+
+  // Apply filters whenever filter conditions change
+  useEffect(() => {
+    if (initialLoadComplete || projects.length > 0) {
+      applyFilters();
+    }
+  }, [searchQuery, selectedCategory, minBudget, maxBudget, projects, initialLoadComplete]);
 
   const applyFilters = () => {
     let filtered = [...projects];
@@ -89,7 +95,7 @@ const ProjectsPage: React.FC = () => {
         />
         
         {filteredProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
             {filteredProjects.map(project => (
               <ProjectCard key={project.id} project={project} />
             ))}

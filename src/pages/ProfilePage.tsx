@@ -36,6 +36,7 @@ const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [userProjects, setUserProjects] = useState<any[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   // Formulário de edição
   const [profileImage, setProfileImage] = useState('');
@@ -83,10 +84,12 @@ const ProfilePage: React.FC = () => {
     }
     setSkills([...skills, newSkill.trim()]);
     setNewSkill('');
+    setHasUnsavedChanges(true);
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
     setSkills(skills.filter(skill => skill !== skillToRemove));
+    setHasUnsavedChanges(true);
   };
 
   const handleSaveProfile = () => {
@@ -100,7 +103,7 @@ const ProfilePage: React.FC = () => {
         portfolio
       };
       updateFreelancerProfile(updatedProfile);
-      updateCurrentUser(updatedProfile); // Add this line
+      updateCurrentUser(updatedProfile);
     } else if (isClient && currentUser) {
       const updatedProfile: ClientProfile = {
         ...(currentUser as ClientProfile),
@@ -108,19 +111,22 @@ const ProfilePage: React.FC = () => {
         description
       };
       updateClientProfile(updatedProfile);
-      updateCurrentUser(updatedProfile); // Add this line
+      updateCurrentUser(updatedProfile);
     }
     
     setIsEditing(false);
+    setHasUnsavedChanges(false);
     toast.success('Perfil atualizado com sucesso');
   };
 
   const handleAddPortfolioItem = (item: PortfolioItem) => {
     setPortfolio([...portfolio, item]);
+    setHasUnsavedChanges(true);
   };
 
   const handleRemovePortfolioItem = (id: string) => {
     setPortfolio(portfolio.filter(item => item.id !== id));
+    setHasUnsavedChanges(true);
   };
 
   const { removeUser } = useApp();
@@ -172,7 +178,10 @@ const ProfilePage: React.FC = () => {
                   <div className="h-32 w-32 mb-4 md:mb-0">
                     <ImageUpload
                       initialImage={profileImage}
-                      onImageUpload={setProfileImage}
+                      onImageUpload={(url) => {
+                        setProfileImage(url);
+                        setHasUnsavedChanges(true);
+                      }}
                       className="h-32 w-32 rounded-full overflow-hidden border-4 border-white shadow-md"
                     />
                   </div>
@@ -199,7 +208,10 @@ const ProfilePage: React.FC = () => {
                     <div className="mt-4 md:mt-0">
                       {isEditing ? (
                         <div className="flex space-x-3">
-                          <Button variant="outline" onClick={() => setIsEditing(false)}>
+                          <Button variant="outline" onClick={() => {
+                            setIsEditing(false);
+                            setHasUnsavedChanges(false);
+                          }}>
                             Cancelar
                           </Button>
                           <Button className="conecta-button" onClick={handleSaveProfile}>
@@ -241,7 +253,10 @@ const ProfilePage: React.FC = () => {
                         placeholder="Fale sobre você, sua experiência e suas especialidades..."
                         className="conecta-input min-h-[150px]"
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={(e) => {
+                          setDescription(e.target.value);
+                          setHasUnsavedChanges(true);
+                        }}
                       />
                     </div>
                   ) : (
@@ -312,7 +327,10 @@ const ProfilePage: React.FC = () => {
                       type="tel"
                       placeholder="+55 (99) 99999-9999"
                       value={whatsappNumber}
-                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      onChange={(e) => {
+                        setWhatsappNumber(e.target.value);
+                        setHasUnsavedChanges(true);
+                      }}
                       className="w-full conecta-input"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
@@ -410,6 +428,23 @@ const ProfilePage: React.FC = () => {
           {/* Aba de Portfólio para Freelancers */}
           {isFreelancer && (
             <TabsContent value="portfolio">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Portfólio</h2>
+                <div className="flex items-center gap-4">
+                  {hasUnsavedChanges && (
+                    <span className="text-sm text-amber-600 bg-amber-50 px-3 py-1 rounded-md">
+                      Você tem alterações não salvas
+                    </span>
+                  )}
+                  {isEditing && (
+                    <Button className="conecta-button" onClick={handleSaveProfile}>
+                      <Save size={16} className="mr-2" />
+                      Salvar Alterações
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               <PortfolioSection 
                 items={portfolio} 
                 onAdd={handleAddPortfolioItem} 
@@ -492,7 +527,6 @@ const PortfolioSection: React.FC<{
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Portfólio</h2>
         {isEditing && (
           <Button className="conecta-button" onClick={() => setShowAddPortfolio(true)}>
             <Plus size={16} className="mr-2" />
