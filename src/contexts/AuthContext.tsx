@@ -26,7 +26,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isClient: boolean;
   isFreelancer: boolean;
-  updateCurrentUser: (updatedUser: User | FreelancerProfile | ClientProfile) => void; // Add this line
+  updateCurrentUser: (updatedUser: User | FreelancerProfile | ClientProfile | AdminProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Add this new function to update the current user
-  const updateCurrentUser = (updatedUser: User | FreelancerProfile | ClientProfile) => {
+  const updateCurrentUser = (updatedUser: User | FreelancerProfile | ClientProfile | AdminProfile) => {
     setCurrentUser(updatedUser);
     
     // Fix: Use the saveCurrentUser helper function instead of directly using localStorage
@@ -162,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAdmin: currentUser?.role === 'admin',
     isClient: currentUser?.role === 'client',
     isFreelancer: currentUser?.role === 'freelancer',
-    updateCurrentUser, // Add this line
+    updateCurrentUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

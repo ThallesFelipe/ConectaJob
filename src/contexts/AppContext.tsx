@@ -39,6 +39,7 @@ interface AppContextType {
   getFreelancerById: (freelancerId: string) => FreelancerProfile | null;
   updateFreelancerProfile: (freelancer: FreelancerProfile) => void;
   updateClientProfile: (client: ClientProfile) => void;
+  updateAdminProfile: (admin: AdminProfile) => void; // Adicione esta linha
   getProjectById: (projectId: string) => Project | undefined;
   completeProject: (projectId: string) => void;
   hireFreelancer: (projectId: string, freelancerId: string, proposalId: string) => void;
@@ -275,8 +276,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     setUsers(updatedUsers);
     
-    // Persiste no localStorage
-    localStorage.setItem('conectaJobUsers', JSON.stringify(updatedUsers));
+    // FIX: Use updateUser helper instead of direct localStorage manipulation
+    // to ensure consistency with the storage keys defined in the application
+    updateUser(updatedProfile);
   };
 
   const updateClientProfile = (client: ClientProfile) => {
@@ -297,6 +299,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsers(updatedUsers);
     updateUser(client);
     toast.success('Profile updated successfully');
+  };
+
+  const updateAdminProfile = (admin: AdminProfile) => {
+    if (!isAuthenticated || currentUser?.id !== admin.id) {
+      toast.error('You do not have permission to update this profile');
+      return;
+    }
+  
+    const updatedUsers = [...users];
+    const adminIndex = updatedUsers.findIndex(u => u.id === admin.id);
+    
+    if (adminIndex === -1) {
+      toast.error('Admin not found');
+      return;
+    }
+    
+    updatedUsers[adminIndex] = admin;
+    setUsers(updatedUsers);
+    updateUser(admin);
+    toast.success('Admin profile updated successfully');
   };
 
   const getProjectById = (projectId: string) => {
@@ -432,12 +454,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteProject,
     addRating,
     deleteUser,
-    removeUser, // Adicione esta linha
+    removeUser,
     getProjectsByUser,
     getFreelancers,
     getFreelancerById,
     updateFreelancerProfile,
     updateClientProfile,
+    updateAdminProfile, // Add this line
     getProjectById,
     completeProject,
     hireFreelancer,
