@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 const ProfilePage: React.FC = () => {
-  const { currentUser, isAuthenticated, isFreelancer, isClient } = useAuth();
+  const { currentUser, isAuthenticated, isFreelancer, isClient, updateCurrentUser } = useAuth();
   const { getProjectsByUser, updateFreelancerProfile, updateClientProfile } = useApp();
   const navigate = useNavigate();
   
@@ -100,6 +100,7 @@ const ProfilePage: React.FC = () => {
         portfolio
       };
       updateFreelancerProfile(updatedProfile);
+      updateCurrentUser(updatedProfile); // Add this line
     } else if (isClient && currentUser) {
       const updatedProfile: ClientProfile = {
         ...(currentUser as ClientProfile),
@@ -107,6 +108,7 @@ const ProfilePage: React.FC = () => {
         description
       };
       updateClientProfile(updatedProfile);
+      updateCurrentUser(updatedProfile); // Add this line
     }
     
     setIsEditing(false);

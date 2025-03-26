@@ -26,6 +26,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isClient: boolean;
   isFreelancer: boolean;
+  updateCurrentUser: (updatedUser: User | FreelancerProfile | ClientProfile) => void; // Add this line
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -144,6 +145,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  // Add this new function to update the current user
+  const updateCurrentUser = (updatedUser: User | FreelancerProfile | ClientProfile) => {
+    setCurrentUser(updatedUser);
+    
+    // Also update in localStorage if you're storing the user there
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   const value = {
     currentUser,
     login,
@@ -152,7 +161,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated,
     isAdmin: currentUser?.role === 'admin',
     isClient: currentUser?.role === 'client',
-    isFreelancer: currentUser?.role === 'freelancer'
+    isFreelancer: currentUser?.role === 'freelancer',
+    updateCurrentUser, // Add this line
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

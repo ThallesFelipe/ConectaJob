@@ -54,6 +54,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { currentUser, isAuthenticated } = useAuth();
 
   useEffect(() => {
+    const savedUsers = localStorage.getItem('conectaJobUsers');
+    if (savedUsers) {
+      setUsers(JSON.parse(savedUsers));
+    }
     setProjects(getProjects());
     setCategories(getCategories());
     setUsers(getUsers());
@@ -263,24 +267,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return freelancer || null;
   };
 
-  const updateFreelancerProfile = (freelancer: FreelancerProfile) => {
-    if (!isAuthenticated || currentUser?.id !== freelancer.id) {
-      toast.error('You do not have permission to update this profile');
-      return;
-    }
-
-    const updatedUsers = [...users];
-    const freelancerIndex = updatedUsers.findIndex(u => u.id === freelancer.id);
+  const updateFreelancerProfile = (updatedProfile: FreelancerProfile) => {
+    // Atualiza o estado
+    const updatedUsers = users.map(user => 
+      user.id === updatedProfile.id ? updatedProfile : user
+    );
     
-    if (freelancerIndex === -1) {
-      toast.error('Freelancer not found');
-      return;
-    }
-    
-    updatedUsers[freelancerIndex] = freelancer;
     setUsers(updatedUsers);
-    updateUser(freelancer);
-    toast.success('Profile updated successfully');
+    
+    // Persiste no localStorage
+    localStorage.setItem('conectaJobUsers', JSON.stringify(updatedUsers));
   };
 
   const updateClientProfile = (client: ClientProfile) => {
