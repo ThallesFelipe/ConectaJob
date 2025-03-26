@@ -11,7 +11,7 @@ import RatingStars from '@/components/RatingStars';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import { FreelancerProfile, Rating } from '@/types/models';
+import { FreelancerProfile } from '@/types/models';
 import { RatingList } from '@/components/RatingSystem';
 
 const FreelancerProfilePage: React.FC = () => {
@@ -62,20 +62,6 @@ const FreelancerProfilePage: React.FC = () => {
       .toUpperCase();
   };
 
-  const RatingItem = ({ rating }: { rating: Rating }) => (
-    <div className="mb-6 border-b border-conecta-pastel-mint/30 pb-6 last:border-0">
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <p className="font-medium">{rating.clientName}</p>
-          <p className="text-sm text-muted-foreground">
-            {format(new Date(rating.createdAt), 'MMM d, yyyy')}
-          </p>
-        </div>
-        <RatingStars initialRating={rating.rating} readonly size="sm" />
-      </div>
-      <p className="whitespace-pre-line">{rating.comment}</p>
-    </div>
-  );
 
   return (
     <Layout>
@@ -113,13 +99,6 @@ const FreelancerProfilePage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    
-                    {isAuthenticated && (
-                      <Button onClick={handleContactClick} className="conecta-button mt-4 md:mt-0">
-                        <MessageCircle size={16} className="mr-2" />
-                        Contatar Freelancer
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
