@@ -149,8 +149,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateCurrentUser = (updatedUser: User | FreelancerProfile | ClientProfile) => {
     setCurrentUser(updatedUser);
     
-    // Also update in localStorage if you're storing the user there
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    // Fix: Use the saveCurrentUser helper function instead of directly using localStorage
+    saveCurrentUser(updatedUser);
   };
 
   const value = {
