@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,14 +15,40 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ initialImage, onImageUpload, 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      compressImage(file, 800, 0.7).then(compressedBase64 => {
+        setPreview(compressedBase64);
+        onImageUpload(compressedBase64);
+      });
+    }
+  };
+
+  const compressImage = (file: File, maxWidth: number, quality: number): Promise<string> => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setPreview(base64String);
-        onImageUpload(base64String);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
   const handleClearImage = () => {
